@@ -1,0 +1,28 @@
+# -*- coding: utf-8 -*-
+"""
+ORDER HUB Data Contract Layer
+Securing ingestion validation using rigid type schema and counter-anomaly traceback hooks.
+"""
+
+from pydantic import BaseModel, Field, field_validator
+from typing import List, Optional
+
+class RefinedOrderPacket(BaseModel):
+    client_id: str = Field(..., description="Unique enterprise identifier verified against matrix profiles")
+    sku_list: List[str] = Field(..., description="Array of validated standard SKU strings")
+    total_weight: float = Field(..., description="Consolidated cargo weight in kilograms")
+    dispatch_priority: int = Field(default=3, description="Calculated routing priority level [1-5]")
+
+    @field_validator('client_id')
+    @classmethod
+    def validate_client_id(cls, v: str) -> str:
+        if not v.startswith("XC_") and not v.startswith("SH_") and not v.startswith("BJ_"):
+            raise ValueError(f"Invalid corporate registry partition prefix for Client_ID: {v}")
+        return v
+
+    @field_validator('total_weight')
+    @classmethod
+    def validate_weight(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("Consolidated cargo weight must be positive")
+        return v
