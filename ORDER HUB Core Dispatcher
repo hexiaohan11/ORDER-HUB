@@ -1,0 +1,42 @@
+# -*- coding: utf-8 -*-
+"""
+ORDER HUB Core Thread-Safe Scheduler
+Utilizes Double-Check Locking (DCL) for partition-level resource isolation.
+"""
+
+import threading
+import time
+import sys
+from typing import Dict
+from config_refined import RefinedOrderPacket
+
+def log_terminal(level: str, module: str, message: str):
+    print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} [{level}] [{module}] {message}")
+    sys.stdout.flush()
+
+class ThreadPoolScheduler:
+    def __init__(self):
+        self._global_lock = threading.Lock()
+        self._partition_locks: Dict[str, threading.Lock] = {}
+        self._database_store: Dict[str, dict] = {}
+
+    def get_partition_lock(self, client_id: str) -> threading.Lock:
+        if client_id not in self._partition_locks:
+            with self._global_lock:
+                if client_id not in self._partition_locks:
+                    self._partition_locks[client_id] = threading.Lock()
+        return self._partition_locks[client_id]
+
+    def execute_ingest(self, packet: RefinedOrderPacket) -> str:
+        lock = self.get_partition_lock(packet.client_id)
+        with lock:
+            time.sleep(0.05)
+            tx_id = f"TX_SECURE_{int(time.time() * 1000)}"
+            self._database_store[tx_id] = packet.model_dump()
+            log_terminal("INFO", "TX", f"Transaction committed. ID: {tx_id}")
+        return tx_id
+
+if __name__ == "__main__":
+    scheduler = ThreadPoolScheduler()
+    packet = RefinedOrderPacket(client_id="XC_EDUCATIONAL_GROUP_2026", sku_list=["TOMATO"], total_weight=142.5)
+    scheduler.execute_ingest(packet)
