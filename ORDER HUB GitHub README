@@ -1,0 +1,19 @@
+ORDER-HUBEnterprise-grade, high-concurrency intelligent supply chain orchestration and order scheduling engine.Designed to ingest, clean, and dispatch highly unstructured, noisy customer orders into strict schema-validated transaction streams. Fully aligned with Xiaomi MiMo/Gemini LLM Cores and Dify Workflows.Technical Architecture  +-----------------------------------------+
+  |   Unstructured Dirty Orders (.xlsx/txt) |
+  +--------------------+--------------------+
+                       |
+                       v
+  +-----------------------------------------+
+  |       Dify Ingestion Agent Pipeline     | <--- Semantic extraction & entity alignment
+  +--------------------+--------------------+
+                       |
+                       v
+  +-----------------------------------------+
+  |       Refined Schema Validation         | <--- Rigidly aligned to config_refined.py
+  +--------------------+--------------------+
+                       |
+                       v
+  +-----------------------------------------+
+  |   High-Concurrency Lock Isolation (main.py) <--- Multi-threaded zero-race dispatcher
+  +-----------------------------------------+
+System RequirementsPython 3.10+pydantic >= 2.0openpyxl >= 3.1.0Repository Layoutconfig_refined.py: Strict data contract declaring the RefinedOrderPacket schema.main.py: High-concurrency thread-safe dispatcher utilizing Double-Check Locking (DCL) to coordinate ingestion.
